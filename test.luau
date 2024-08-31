@@ -7,7 +7,7 @@ local start = os.clock()
 for x = 1, 100 do
     for y = 1, 100 do
         for z = 1, 100 do
-            creation:addBlock(cm2.AND, {x, y, z}, {})
+            creation:addBlock(cm2.AND, {x, y, z}, nil)
         end
     end
 end

@@ -36,7 +36,7 @@ export type Creation = {
     connection_offset: number,
     block_count: number,
 
-    addBlock: (self: Creation, block: Block, position: Position, properties: { number }) -> BlockHandle,
+    addBlock: (self: Creation, block: Block, position: Position?, properties: { number }?) -> BlockHandle,
     connect: (self: Creation, source: BlockHandle, target: BlockHandle) -> nil,
 }
 
@@ -86,53 +86,60 @@ end
 
 --- creation functions
 local creation = {}
-function creation.addBlock(self: Creation, block: Block, position: Position, properties: { number }): BlockHandle
+function creation.addBlock(self: Creation, block: Block, position: Position?, properties: { number }?): BlockHandle
     -- block id
     self.block_offset += itoa(self.block_data, self.block_offset, block)
 
-    -- double comma, ignore state
-    buffer.writeu16(self.block_data, self.block_offset, 0x2C2C)
-    self.block_offset += 2
+    if position then
+        -- double comma, ignore state
+        buffer.writeu16(self.block_data, self.block_offset, 0x2C2C)
+        self.block_offset += 2
 
-    -- x value
-    self.block_offset += itoa(self.block_data, self.block_offset, position[1])
+        -- x value
+        self.block_offset += itoa(self.block_data, self.block_offset, position[1])
 
-    -- comma
-    buffer.writeu8(self.block_data, self.block_offset, 0x2C)
-    self.block_offset += 1
-    
-    -- y value
-    self.block_offset += itoa(self.block_data, self.block_offset, position[2])
-
-    -- comma
-    buffer.writeu8(self.block_data, self.block_offset, 0x2C)
-    self.block_offset += 1
-    
-    -- z value
-    self.block_offset += itoa(self.block_data, self.block_offset, position[3])
-
-    -- comma
-    buffer.writeu8(self.block_data, self.block_offset, 0x2C)
-    self.block_offset += 1
-
-    -- properties
-    for _, property in ipairs(properties) do
-        -- value
-        self.block_offset += itoa(self.block_data, self.block_offset, property)
-
-        -- plus
-        buffer.writeu8(self.block_data, self.block_offset, 0x2B)
+        -- comma
+        buffer.writeu8(self.block_data, self.block_offset, 0x2C)
         self.block_offset += 1
+        
+        -- y value
+        self.block_offset += itoa(self.block_data, self.block_offset, position[2])
+
+        -- comma
+        buffer.writeu8(self.block_data, self.block_offset, 0x2C)
+        self.block_offset += 1
+        
+        -- z value
+        self.block_offset += itoa(self.block_data, self.block_offset, position[3])
+
+    else
+        -- 4 commas
+        buffer.writeu32(self.block_data, self.block_offset, 0x2C2C2C2C)
+        self.block_offset += 4
     end
 
-    -- end block
-    if #properties > 0 then
-        -- semicolon, replace last plus
-        buffer.writeu8(self.block_data, self.block_offset - 1, 0x3B)
-    else
-        -- semicolon
-        buffer.writeu8(self.block_data, self.block_offset, 0x3B)
+    -- properties
+    if properties then
+        -- comma
+        buffer.writeu8(self.block_data, self.block_offset, 0x2C)
         self.block_offset += 1
+
+        for _, property in ipairs(properties) do
+            -- value
+            self.block_offset += itoa(self.block_data, self.block_offset, property)
+
+            -- plus
+            buffer.writeu8(self.block_data, self.block_offset, 0x2B)
+            self.block_offset += 1
+        end
+
+        -- semicolon
+        buffer.writeu8(self.block_data, self.block_offset - 1, 0x3B)
+        self.block_offset += 1
+    else
+        -- comma and semicolon
+        buffer.writeu16(self.block_data, self.block_offset, 0x3B2C)
+        self.block_offset += 2
     end
 
     -- increment block count and return handle
