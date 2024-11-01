@@ -1,13 +1,13 @@
 local cm2 = require("lib")
 
-local creation = cm2.new(25 * 100 * 100, 0)
+local creation = cm2.new(100 * 100 * 100, 0)
 
 local start = os.clock()
 
 for x = 1, 100 do
     for y = 1, 100 do
         for z = 1, 100 do
-            creation:addBlock(cm2.AND, {x, y, z}, nil)
+            creation:addBlockN(cm2.AND, x, y, z)
         end
     end
 end
